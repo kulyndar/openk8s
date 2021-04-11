@@ -1,21 +1,20 @@
 package cz.fel.cvut.openk8s.migration.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import cz.fel.cvut.openk8s.migration.controller.resources.KubernetesResource;
 import cz.fel.cvut.openk8s.migration.controller.resources.*;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentList;
 import io.fabric8.kubernetes.api.model.apps.ReplicaSet;
 import io.fabric8.kubernetes.api.model.apps.ReplicaSetList;
-import io.fabric8.kubernetes.client.*;
-import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
-import io.fabric8.kubernetes.client.dsl.MixedOperation;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.internal.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
@@ -63,57 +62,7 @@ public class KubernetesServiceBean implements KubernetesService {
             LOGGER.error("Error occurred when trying to connect to K8s with IP: " + kubeip, e);
             return StatusResource.unexpected();
         }
-
         return StatusResource.ok();
-    }
-    @Override
-    @Deprecated
-    public List<NamespaceResource> getClusterInfo() {
-        List<NamespaceResource> namespaceResourceList = new ArrayList<>();
-        NamespaceList list = kubernetesClient.namespaces().list();
-        for (Namespace namespace : list.getItems()) {
-            NamespaceResource namespaceResource = new NamespaceResource(namespace.getMetadata().getName());
-            List<PodResource> singlePodResources = new ArrayList<>();
-            Map<Owner, List<PodResource>> podsWithOwners = new HashMap<>();
-
-            PodList podList = kubernetesClient.pods().inNamespace(namespace.getMetadata().getName()).list();
-            for (Pod pod : podList.getItems()) {
-                PodResource podResource = createResource(pod);
-                detectSingleOrWithOwner(pod, singlePodResources, podsWithOwners, podResource);
-            }
-            namespaceResource.setPods(singlePodResources);
-
-            ReplicaSetList replicaSets = kubernetesClient.apps().replicaSets().inNamespace(namespace.getMetadata().getName()).list();
-            List<ReplicaSetResource> singleReplicaSets = new ArrayList<>();
-            Map<Owner, List<ReplicaSetResource>> deploymentReplicaSets = new HashMap<>();
-            for (ReplicaSet replicaSet : replicaSets.getItems()) {
-                ReplicaSetResource replicaSetResource = createResource(replicaSet);
-                replicaSetResource.setPods(new ArrayList<>(bindOwners(replicaSet, podsWithOwners)));
-                detectSingleOrWithOwner(replicaSet, singleReplicaSets, deploymentReplicaSets, replicaSetResource);
-            }
-            namespaceResource.setReplicaSets(singleReplicaSets);
-
-            DeploymentList deploymentList = kubernetesClient.apps().deployments().inNamespace(namespace.getMetadata().getName()).list();
-            List<DeploymentResource> deployments = new ArrayList<>();
-            for (Deployment deployment : deploymentList.getItems()) {
-                DeploymentResource deploymentResource = createResource(deployment);
-                deploymentResource.setReplicaSets(new ArrayList<>(bindOwners(deployment, deploymentReplicaSets)));
-                deployments.add(deploymentResource);
-            }
-            namespaceResource.setDeployments(deployments);
-
-            ServiceList serviceList = kubernetesClient.services().inNamespace(namespace.getMetadata().getName()).list();
-            List<ServiceResource> services = new ArrayList<>();
-            for (io.fabric8.kubernetes.api.model.Service service : serviceList.getItems()) {
-                ServiceResource serviceResource = createResource(service);
-                services.add(serviceResource);
-            }
-            namespaceResource.setServices(services);
-            //TODO add other resource
-
-            namespaceResourceList.add(namespaceResource);
-        }
-       return namespaceResourceList;
     }
 
     @Override
@@ -122,39 +71,39 @@ public class KubernetesServiceBean implements KubernetesService {
         NamespaceList list = kubernetesClient.namespaces().list();
         for (Namespace namespace : list.getItems()) {
             SimpleNamespaceResource namespaceResource = new SimpleNamespaceResource(namespace.getMetadata().getName());
-            List<PodResource> singlePodResources = new ArrayList<>();
-            Map<Owner, List<PodResource>> podsWithOwners = new HashMap<>();
+            List<KubernetesResource> singlePodResources = new ArrayList<>();
+            Map<Owner, List<KubernetesResource>> podsWithOwners = new HashMap<>();
 
             PodList podList = kubernetesClient.pods().inNamespace(namespace.getMetadata().getName()).list();
             for (Pod pod : podList.getItems()) {
-                PodResource podResource = createResource(pod);
+                KubernetesResource podResource = createResource(pod);
                 detectSingleOrWithOwner(pod, singlePodResources, podsWithOwners, podResource);
             }
             namespaceResource.getChildren().addAll(singlePodResources);
 
             ReplicaSetList replicaSets = kubernetesClient.apps().replicaSets().inNamespace(namespace.getMetadata().getName()).list();
-            List<ReplicaSetResource> singleReplicaSets = new ArrayList<>();
-            Map<Owner, List<ReplicaSetResource>> deploymentReplicaSets = new HashMap<>();
+            List<KubernetesResource> singleReplicaSets = new ArrayList<>();
+            Map<Owner, List<KubernetesResource>> deploymentReplicaSets = new HashMap<>();
             for (ReplicaSet replicaSet : replicaSets.getItems()) {
-                ReplicaSetResource replicaSetResource = createResource(replicaSet);
+                KubernetesResource replicaSetResource = createResource(replicaSet);
                 replicaSetResource.getChildren().addAll(new ArrayList<>(bindOwners(replicaSet, podsWithOwners)));
                 detectSingleOrWithOwner(replicaSet, singleReplicaSets, deploymentReplicaSets, replicaSetResource);
             }
             namespaceResource.getChildren().addAll(singleReplicaSets);
 
             DeploymentList deploymentList = kubernetesClient.apps().deployments().inNamespace(namespace.getMetadata().getName()).list();
-            List<DeploymentResource> deployments = new ArrayList<>();
+            List<KubernetesResource> deployments = new ArrayList<>();
             for (Deployment deployment : deploymentList.getItems()) {
-                DeploymentResource deploymentResource = createResource(deployment);
+                KubernetesResource deploymentResource = createResource(deployment);
                 deploymentResource.getChildren().addAll(new ArrayList<>(bindOwners(deployment, deploymentReplicaSets)));
                 deployments.add(deploymentResource);
             }
             namespaceResource.getChildren().addAll(deployments);
 
             ServiceList serviceList = kubernetesClient.services().inNamespace(namespace.getMetadata().getName()).list();
-            List<ServiceResource> services = new ArrayList<>();
+            List<KubernetesResource> services = new ArrayList<>();
             for (io.fabric8.kubernetes.api.model.Service service : serviceList.getItems()) {
-                ServiceResource serviceResource = createResource(service);
+                KubernetesResource serviceResource = createResource(service);
                 services.add(serviceResource);
             }
             namespaceResource.getChildren().addAll(services);
@@ -212,19 +161,7 @@ public class KubernetesServiceBean implements KubernetesService {
         }
     }
 
-    private ServiceResource createResource(io.fabric8.kubernetes.api.model.Service service) {
-        ServiceResource serviceResource = new ServiceResource(service.getMetadata().getName(), service.getKind(),
-                service.getMetadata().getNamespace(), service.getMetadata().getUid());
-        return serviceResource;
-    }
-
-    private DeploymentResource createResource(Deployment deployment) {
-        DeploymentResource deploymentResource = new DeploymentResource(deployment.getMetadata().getName(), deployment.getKind(),
-                deployment.getMetadata().getNamespace(), deployment.getMetadata().getUid());
-        return deploymentResource;
-    }
-
-    private <T> void detectSingleOrWithOwner(HasMetadata resource, List<T> singleList, Map<Owner, List<T>> withOwners, T newResource) {
+    private  void detectSingleOrWithOwner(HasMetadata resource, List<KubernetesResource> singleList, Map<Owner, List<KubernetesResource>> withOwners, KubernetesResource newResource) {
         List<Owner> owners = resource.getMetadata().getOwnerReferences() == null ? new ArrayList<>() :
                 resource.getMetadata().getOwnerReferences().stream().map(o -> new Owner(o.getKind(), o.getUid())).collect(Collectors.toList());
         if (owners.isEmpty()) {
@@ -247,16 +184,9 @@ public class KubernetesServiceBean implements KubernetesService {
         return new ArrayList<>();
     }
 
-    private ReplicaSetResource createResource(ReplicaSet replicaSet) {
-        ReplicaSetResource resource = new ReplicaSetResource(replicaSet.getMetadata().getName(), replicaSet.getKind(),
-                replicaSet.getMetadata().getNamespace(), replicaSet.getMetadata().getUid());
-        return resource;
-    }
-
-    private PodResource createResource(Pod pod) {
-        PodResource resource = new PodResource(pod.getMetadata().getName(), pod.getKind(),
-                pod.getMetadata().getNamespace(), pod.getMetadata().getUid());
-        return resource;
+    private KubernetesResource createResource(HasMetadata hasMetadata) {
+        return new KubernetesResource(hasMetadata.getMetadata().getName(), hasMetadata.getKind(),
+                hasMetadata.getMetadata().getNamespace(), hasMetadata.getMetadata().getUid());
     }
 
     private class Owner {

@@ -1,36 +1,13 @@
 import {PureComponent} from "react";
-import {
-    Form,
-    Input,
-    Button,
-    Checkbox,
-    Select,
-    message,
-    Space,
-    Empty,
-    Tree,
-    Typography,
-    Modal,
-    Collapse,
-    Alert
-} from 'antd';
-import { trackPromise } from 'react-promise-tracker';
+import {Alert, Button, Collapse, Empty, Modal, Space, Tree, Typography} from 'antd';
 import yaml from 'js-yaml';
-import {InfoCircleTwoTone, CheckCircleTwoTone, CloseCircleTwoTone, ExclamationCircleTwoTone}  from '@ant-design/icons';
+import {CheckCircleTwoTone, CloseCircleTwoTone, ExclamationCircleTwoTone, InfoCircleTwoTone} from '@ant-design/icons';
+import {callApi, GET, ROUTE_KUBERNETES_CLUSTERINFO, ROUTE_KUBERNETES_INFO} from "../../routes/API";
 
 
-const { Option } = Select;
 const {Panel} = Collapse;
-
-
 const { Title } = Typography;
-const layout = {
-    labelCol: { span: 8 },
-    wrapperCol: { span: 10 },
-};
-const tailLayout = {
-    wrapperCol: { offset: 11, span: 16 },
-};
+
 
 export default class KubernetesClusterStructure extends PureComponent {
 
@@ -43,113 +20,14 @@ export default class KubernetesClusterStructure extends PureComponent {
         }
     }
 
-    handleAuthChange = (value) => {
-        this.setState({authType: value});
-    };
-
     componentDidMount() {
-        trackPromise(fetch("http://localhost:8080/init/clusterinfo", {
-                method: 'GET',
-                mode: "cors",
-                credentials: 'include',
-                headers: {
-                    "Connection": "keep-alive",
-                }
-            }).then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    this.props.onError();
-                }
-            })
-                .then(response => {
-                    if (response) {
-                        this.setState({ ...this.makeTreeStructureSimple(response.simpleStructure), messages: response.messages, clusterStructureFromBe: response.structure});
-                    }
-                }).catch(error => {
-                    console.log(error);
-                    this.props.onError()
-                })
-        );
+        callApi(ROUTE_KUBERNETES_CLUSTERINFO, GET, this.onClusterInfoSuccess, this.onError);
     }
-    makeTreeStructure = (structure) => {
-        let data = [];
-        const uidMap = new Map();
-        const parentChildUidMap = new Map();
-        if (structure) {
-            structure.forEach(ns => {
-                const namespaceDisables = ns.name && ns.name.startsWith("kube-");
-                const namespace = this.createResource(ns, null);
-                namespace.disabled = namespaceDisables;
-                if (ns.deployments) {
-                    ns.deployments.forEach(depl => {
-                        if (!parentChildUidMap.has(depl.uid)) {
-                            parentChildUidMap.set(depl.uid, []);
-                        }
-                        const deployment = this.createResource(depl, null);
-                        if (depl.replicaSets) {
-                            depl.replicaSets.forEach(rs => {
-                                const replicaSet = this.createResource(rs, depl);
-                                if (!parentChildUidMap.has(rs.uid)) {
-                                    parentChildUidMap.set(rs.uid, []);
-                                }
-                                if (rs.pods) {
-                                    rs.pods.forEach(p => {
-                                        const pod = this.createResource(p, replicaSet);
-                                        replicaSet.children.push(pod);
-                                        uidMap.set(p.uid, p);
-                                        parentChildUidMap.get(depl.uid).push(p.uid);
-                                        parentChildUidMap.get(rs.uid).push(p.uid);
-                                    });
-                                }
-                                deployment.children.push(replicaSet);
-                                uidMap.set(rs.uid, rs);
-                                parentChildUidMap.get(depl.uid).push(rs.uid);
-                            });
-                        }
-                        namespace.children.push(deployment);
-                        uidMap.set(depl.uid, depl);
-                    });
-                }
-                if (ns.pods) {
-                    ns.pods.forEach(p => {
-                        const pod = this.createResource(p, null);
-                        namespace.children.push(pod);
-                        uidMap.set(p.uid, p);
-                    });
-                }
-                if (ns.replicaSets) {
-                    ns.replicaSets.forEach(rs => {
-                        const replicaSet = this.createResource(rs, null);
-                        if (!parentChildUidMap.has(rs.uid)) {
-                            parentChildUidMap.set(rs.uid, []);
-                        }
-                        if (rs.pods) {
-                            rs.pods.forEach(p => {
-                                const pod = this.createResource(p, replicaSet);
-                                replicaSet.children.push(pod);
-                                uidMap.set(p.uid, p);
-                                parentChildUidMap.get(rs.uid).push(p.uid);
-                            });
-                        }
-                        namespace.children.push(replicaSet);
-                        uidMap.set(rs.uid, rs);
-                    });
-                }
-                if (ns.services) {
-                    ns.services.forEach(s => {
-                        const service = this.createResource(s, null);
-                        namespace.children.push(service);
-                        uidMap.set(s.uid, s);
-                    });
-                }
 
-
-                data.push(namespace);
-                uidMap.set(ns.uid, ns);
-            })
+    onClusterInfoSuccess = (response) => {
+        if (response) {
+            this.setState({ ...this.makeTreeStructureSimple(response.simpleStructure), messages: response.messages, clusterStructureFromBe: response.structure});
         }
-        return {clusterStructure: data, uidMap: uidMap, parentChildUidMap: parentChildUidMap};
     };
 
     makeTreeStructureSimple = (structure) => {
@@ -216,6 +94,7 @@ export default class KubernetesClusterStructure extends PureComponent {
        }
        return data;
     }
+
     onCheck = (keys) => {
         const {parentChildUidMap} = this.state;
         const oldSelected = [...this.state.selected];
@@ -240,29 +119,21 @@ export default class KubernetesClusterStructure extends PureComponent {
     };
 
     getItemDescription = (item) => {
-        trackPromise(fetch("http://localhost:8080/init/info" + "/" + item.kind + "/" + item.name  + (item.namespace ? "?namespace=" + item.namespace : ""), {
-                method: 'GET',
-                mode: "cors",
-                credentials: 'include',
-                headers: {
-                    "Connection": "keep-alive",
-                }
-            }).then(response => {
-                if (response.ok) {
-                    return response.text();
-                } else {
-                    this.props.onError();
-                }
-            })
-                .then(response => {
-                    if (response) {
-                        this.setState({openInfoModal: true, infoModalItem: item, infoForModal: response});
-                    }
-                }).catch(error => {
-                    console.log(error);
-                    this.props.onError()
-                })
-        );
+        let uri = ROUTE_KUBERNETES_INFO.replace("{kind}", item.kind).replace("{name}", item.name);
+        if (item.namespace) {
+            uri = uri + "?namespace=" + item.namespace;
+        }
+        callApi(uri, GET, (resp) => this.onItemDescriptionSuccess(resp, item), this.onError, null, (r) => r.text());
+    };
+
+    onItemDescriptionSuccess = (response, item) => {
+        if (response) {
+            this.setState({openInfoModal: true, infoModalItem: item, infoForModal: response});
+        }
+    };
+
+    onError = () => {
+        this.props.onError();
     };
 
     onSelect = (key) => {
@@ -292,7 +163,6 @@ export default class KubernetesClusterStructure extends PureComponent {
     };
 
     createHtml = (text) => {
-        console.log(text);
         return {__html: text}
     };
 
@@ -367,8 +237,6 @@ export default class KubernetesClusterStructure extends PureComponent {
         </Space>
         </div>)
 
-
     }
-
 
 }

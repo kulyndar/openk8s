@@ -1,26 +1,23 @@
 package cz.fel.cvut.openk8s.migration.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import cz.fel.cvut.openk8s.migration.controller.resources.*;
+import cz.fel.cvut.openk8s.migration.controller.resources.ClusterInfoResource;
+import cz.fel.cvut.openk8s.migration.controller.resources.InitKubernetesResource;
+import cz.fel.cvut.openk8s.migration.controller.resources.StatusResource;
 import cz.fel.cvut.openk8s.migration.service.KubernetesService;
-import io.fabric8.kubernetes.client.KubernetesClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Lookup;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "${openk8s.migration.fe.uri}", allowCredentials = "true")
 @RestController
-@RequestMapping("/init")
-public class InitController {
+@RequestMapping("/kubernetes")
+public class KubernetesController {
 
     @Autowired
     private KubernetesService kubernetesService;
 
-    @PutMapping("/kubernetes")
+    @PutMapping("/init")
     public ResponseEntity<StatusResource> initKubernetes(@RequestBody InitKubernetesResource initKubernetesResource) {
         StatusResource errorStatus = kubernetesService.init(initKubernetesResource.getKubeip(), initKubernetesResource.getAuthType(),
                 initKubernetesResource.getTokenId(), initKubernetesResource.getTokeSecret(),

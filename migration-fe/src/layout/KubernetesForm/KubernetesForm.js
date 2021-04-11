@@ -1,6 +1,6 @@
 import {PureComponent} from "react";
-import {Form, Input, Button, Checkbox, Select, message} from 'antd';
-import { trackPromise } from 'react-promise-tracker';
+import {Form, Input, Button, Select} from 'antd';
+import {callApi, PUT, ROUTE_KUBERNETES_INIT} from "../../routes/API";
 const { Option } = Select;
 
 const layout = {
@@ -24,41 +24,24 @@ export default class KubernetesForm extends PureComponent {
         this.setState({authType: value});
     };
 
+    handleSuccess = (response) => {
+        if (response) {
+            if (response.success) {
+                this.props.onSuccess(response);
+            } else {
+                this.props.onError(response);
+            }
+        }
+    };
+
+    onError = () => {
+        this.props.onError();
+    };
+
 
     render() {
         const {authType} = this.state;
-        const onFinish = (values) => {
-            trackPromise(fetch("http://localhost:8080/init/kubernetes", {
-                method: 'PUT',
-                mode: "cors",
-                credentials: 'include',
-                headers: {
-                    "Connection": "keep-alive", // request content type,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(values)
-            }).then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    this.props.onError();
-                }
-            })
-                .then(response => {
-                    if (response) {
-                        if (response.success) {
-                            this.props.onSuccess(response);
-                        } else {
-                            this.props.onError(response);
-                        }
-                    }
-                }).catch(error => {
-                    console.log(error);
-                    this.props.onError()
-            })
-            );
-
-        };
+        const onFinish = (values) => callApi(ROUTE_KUBERNETES_INIT, PUT, this.handleSuccess, this.onError, JSON.stringify(values));
 
         const onFinishFailed = (errorInfo) => {
             console.log('Failed:', errorInfo);

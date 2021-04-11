@@ -1,0 +1,90 @@
+@import '~antd/dist/antd.css';
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.overlap {
+  z-index:1050;
+  background-color: rgba(40, 44, 52, 0.45);
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+}
+.overlap div{
+  z-index:1051;
+  position: relative;
+  top: 50%;
+}
+.header{
+    min-height: 100px;
+    color: white;
+}
+.header  .ant-steps-item-title{
+  color: white!important;
+}
+.header .ant-steps {
+  width: 60%;
+  margin: 40px auto;
+}
+.closeButton {
+  color:  white;
+  position: absolute;
+  top: 45px;
+  right: 50px;
+}
+
+.closeButton svg {
+  width: 1.5em;
+  height: 1.5em;
+  transition: all  0.3s ease-in-out;
+}
+.closeButton:hover svg {
+  width: 2em;
+  height: 2em;
+}
+.steps-content {
+  margin-top: 50px;
+  min-height: calc(100vh - 150px);
+}
+pre.yaml {
+  background-color: hsla(0,0%,58.8%,.1);
+  border: 1px solid hsla(0,0%,39.2%,.2);
+  border-radius: 3px;
+}

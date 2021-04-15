@@ -1,5 +1,5 @@
 import {PureComponent} from "react";
-import {Alert, Button, Collapse, Empty, Modal, Space, Tree, Typography} from 'antd';
+import {Alert, Button, Collapse, Empty, message, Modal, Space, Tree, Typography} from 'antd';
 import yaml from 'js-yaml';
 import {CheckCircleTwoTone, CloseCircleTwoTone, ExclamationCircleTwoTone, InfoCircleTwoTone} from '@ant-design/icons';
 import {callApi, GET, ROUTE_KUBERNETES_CLUSTERINFO, ROUTE_KUBERNETES_INFO} from "../../routes/API";
@@ -34,24 +34,28 @@ export default class KubernetesClusterStructure extends PureComponent {
         let data = [];
         const uidMap = new Map();
         const parentChildUidMap = new Map();
+        const childParentUidMap = new Map();
         if (structure) {
             structure.forEach(ns => {
                 const namespaceDisables = ns.name && ns.name.startsWith("kube-");
                 const namespace = this.createResource(ns, null);
                 namespace.disabled = namespaceDisables;
-                const childrenRes = this.makeSubtree(ns.children, [], parentChildUidMap, uidMap, null);
+                const childrenRes = this.makeSubtree(ns.children, [], parentChildUidMap, uidMap, null, childParentUidMap);
                 namespace.children.push(...childrenRes);
                 data.push(namespace)
             })
         }
-        return {clusterStructure: data, uidMap: uidMap, parentChildUidMap: parentChildUidMap};
+        return {clusterStructure: data, uidMap: uidMap, parentChildUidMap: parentChildUidMap, childParentUidMap: childParentUidMap};
     };
 
-    makeSubtree = (children, parents, parentChildUidMap, uidMap, parent) => {
+    makeSubtree = (children, parents, parentChildUidMap, uidMap, parent, childParentUidMap) => {
         const data = [];
         children.forEach(ch => {
             if (!parentChildUidMap.has(ch.uid)) {
                 parentChildUidMap.set(ch.uid, []);
+            }
+            if (parents && parents.length > 0) {
+                childParentUidMap.set(ch.uid, parents);
             }
             const child = this.createResource(ch, parent);
             const childrenRes = this.makeSubtree(ch.children, [...parents, child.uid], parentChildUidMap, uidMap, ch);
@@ -73,7 +77,7 @@ export default class KubernetesClusterStructure extends PureComponent {
         };
     };
 
-    getTreeData(roots, ns, disabled) {
+    getTreeData = (roots, ns, disabled) => {
        const {selected} = this.state;
        let data = [];
        const namespaceDisables = ns.disabled;
@@ -93,7 +97,27 @@ export default class KubernetesClusterStructure extends PureComponent {
            });
        }
        return data;
-    }
+    };
+
+    onSubmit = () => {
+        const {childParentUidMap, uidMap, selected} = this.state;
+        if (!selected || selected.length === 0) {
+            message.error("Please, select some resources to migrate.");
+            return;
+        }
+        const finalSelected = [];
+        selected.forEach(item => {
+            if (childParentUidMap.get(item)) {
+                const parents = childParentUidMap.get(item);
+                if (!parents.some(p => selected.includes(p))) {
+                    finalSelected.push(uidMap.get(item));
+                }
+            } else {
+                finalSelected.push(uidMap.get(item));
+            }
+        });
+        this.props.onSubmit(finalSelected);
+    };
 
     onCheck = (keys) => {
         const {parentChildUidMap} = this.state;
@@ -231,8 +255,8 @@ export default class KubernetesClusterStructure extends PureComponent {
             <Button type="default" onClick={this.props.onPrev}>
                 Back
             </Button>
-            <Button type="primary" htmlType="submit">
-                Next
+            <Button type="primary" htmlType="submit" onClick={this.onSubmit}>
+                Migrate
             </Button>
         </Space>
         </div>)

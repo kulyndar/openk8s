@@ -16,6 +16,11 @@ public class KubernetesResource implements Serializable {
     public KubernetesResource() {
     }
 
+    public KubernetesResource(String name, String kind) {
+        this.name = name;
+        this.kind = kind;
+    }
+
     public KubernetesResource(String name, String kind, String namespace, String uid) {
         this.name = name;
         this.kind = kind;
@@ -58,5 +63,15 @@ public class KubernetesResource implements Serializable {
 
     public List<KubernetesResource> getChildren() {
         return children;
+    }
+
+    @Override
+    public String toString() {
+        return "KubernetesResource{" +
+                "name='" + name + '\'' +
+                ", kind='" + kind + '\'' +
+                ", namespace='" + namespace + '\'' +
+                ", uid='" + uid + '\'' +
+                '}';
     }
 }

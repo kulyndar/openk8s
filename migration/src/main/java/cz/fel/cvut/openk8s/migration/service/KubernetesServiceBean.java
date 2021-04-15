@@ -3,6 +3,7 @@ package cz.fel.cvut.openk8s.migration.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import cz.fel.cvut.openk8s.migration.controller.resources.KubernetesResource;
 import cz.fel.cvut.openk8s.migration.controller.resources.*;
+import cz.fel.cvut.openk8s.migration.service.migration.MigrationProvider;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentList;
@@ -12,9 +13,9 @@ import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import io.fabric8.kubernetes.client.internal.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,9 @@ public class KubernetesServiceBean implements KubernetesService {
     private static final String AUTH_TYPE_TOKEN = "token";
 
     private KubernetesClient kubernetesClient;
+
+    @Autowired
+    private List<MigrationProvider> migrationProviders;
 
     @Override
     public StatusResource init(String kubeip, String authType, String tokenId, String tokenSecret, String token) {
@@ -130,34 +134,35 @@ public class KubernetesServiceBean implements KubernetesService {
     private MessageResource createDefaultInfoMessage() {
         StringBuilder message = new StringBuilder();
         message.append("The following types of resources are currently being migrated:")
-                .append("<ul>")
-                .append("<li>Pod</li>")
-                .append("<li>ReplicaSet</li>")
-                .append("<li>Deployment</li>")
-                .append("<li>Service</li>")
-                .append("</ul>");
+                .append("<ul>");
+        for (MigrationProvider provider : migrationProviders) {
+            message.append("<li>")
+                    .append(provider.getKind())
+                    .append("</li>");
+        }
+        message.append("</ul>");
         return MessageResource.info(message.toString());
     }
 
     @Override
     public String getInfo(String namespace, String kind, String name) throws JsonProcessingException {
-        final String kindLower = kind.toLowerCase();
-        switch (kindLower) {
-            case "pod":
-                Pod pod = kubernetesClient.pods().inNamespace(namespace).withName(name).get();
-                return SerializationUtils.dumpAsYaml(pod);
-            case "deployment":
-                Deployment deployment = kubernetesClient.apps().deployments().inNamespace(namespace).withName(name).get();
-                return SerializationUtils.dumpAsYaml(deployment);
-            case "service":
-                io.fabric8.kubernetes.api.model.Service service = kubernetesClient.services().inNamespace(namespace).withName(name).get();
-                return SerializationUtils.dumpAsYaml(service);
-            case "replicaset":
-                ReplicaSet replicaSet = kubernetesClient.apps().replicaSets().inNamespace(namespace).withName(name).get();
-                return SerializationUtils.dumpAsYaml(replicaSet);
-            default:
-                return "Not implemented yet";
+        for (MigrationProvider provider : migrationProviders) {
+            if (provider.isResponsibleFor(kind)) {
+                return provider.getInfo(name, namespace, this.kubernetesClient);
+            }
+        }
+        return "Not implemented yet";
+    }
 
+
+    @Override
+    public void destoy() {
+        LOGGER.info("Start destroying kubernetes client");
+        if (this.kubernetesClient != null) {
+            this.kubernetesClient.close();
+            this.kubernetesClient = null;
+        } else {
+            LOGGER.warn("Kubernetes client is not initialized or is already destroyed");
         }
     }
 
@@ -187,6 +192,11 @@ public class KubernetesServiceBean implements KubernetesService {
     private KubernetesResource createResource(HasMetadata hasMetadata) {
         return new KubernetesResource(hasMetadata.getMetadata().getName(), hasMetadata.getKind(),
                 hasMetadata.getMetadata().getNamespace(), hasMetadata.getMetadata().getUid());
+    }
+
+    @Override
+    public KubernetesClient getKubernetesClient() {
+        return kubernetesClient;
     }
 
     private class Owner {

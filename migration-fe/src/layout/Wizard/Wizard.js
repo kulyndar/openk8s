@@ -3,6 +3,7 @@ import {Steps, Button, Layout, message} from "antd";
 import {CloseOutlined}  from '@ant-design/icons';
 import KubernetesForm from "../KubernetesForm/KubernetesForm";
 import KubernetesClusterStructure from "../KubernetesClusterStructure/KubernetesClusterStructure";
+import OpenShiftForm from "../OpenShiftForm/OpenShiftForm";
 
 const { Step } = Steps;
 const { Header, Content, Footer } = Layout;
@@ -52,19 +53,23 @@ export default class Main extends PureComponent {
         this.setState({current: newCurrent});
     };
 
+    onSubmit = (selectedItems) => {
+        //TODO
+    };
+
     prepareSteps = () => {
         return [
             {
-                title: 'First',
-                content: (<KubernetesForm onNext={this.next} onError={this.error} onSuccess={this.success}/>),
+                title: 'Connect to Kubernetes',
+                content: (<KubernetesForm onNext={this.next} onError={this.error} onSuccess={this.success} />),
             },
             {
-                title: 'Second',
+                title: 'Connect to OpenShift',
+                content: (<OpenShiftForm onNext={this.next} onError={this.error} onSuccess={this.success} onPrev={this.prev} />),
+            },
+            {
+                title: 'Select data',
                 content: (<KubernetesClusterStructure onNext={this.next} onError={this.error} onSuccess={this.success} onPrev={this.prev}/>),
-            },
-            {
-                title: 'Last',
-                content: 'Last-content',
             },
         ];
     };
@@ -85,27 +90,6 @@ export default class Main extends PureComponent {
                 <Content>
                     <div className="steps-content">{steps[current].content}</div>
                 </Content>
-                {/*<Footer>*/}
-                {/*    <div className="steps-action">*/}
-                {/*        {current > 0 && (*/}
-                {/*            <Button style={{margin: '0 8px'}} onClick={() => this.prev()}>*/}
-                {/*                Previous*/}
-                {/*            </Button>*/}
-                {/*        )}*/}
-                {/*        {current < steps.length - 1 && (*/}
-                {/*            <Button type="primary" onClick={() => this.next()}>*/}
-                {/*                Next*/}
-                {/*            </Button>*/}
-                {/*        )}*/}
-                {/*        {current === steps.length - 1 && (*/}
-                {/*            <Button type="primary">*/}
-                {/*                Done*/}
-                {/*            </Button>*/}
-                {/*        )}*/}
-
-                {/*    </div>*/}
-                {/*</Footer>*/}
-
             </Layout>
         );
     };

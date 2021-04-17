@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import cz.fel.cvut.openk8s.migration.controller.resources.KubernetesResource;
 import cz.fel.cvut.openk8s.migration.exception.ItemNotFoundException;
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.internal.SerializationUtils;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -30,7 +31,18 @@ public class ServiceMigrationProvider implements MigrationProvider {
         if (service == null) {
             throw new ItemNotFoundException();
         }
-        openShiftClient.services().inNamespace(item.getNamespace()).create(service);
+        Service destService = new ServiceBuilder()
+                .withApiVersion(service.getApiVersion()).withKind(service.getKind())
+                .withNewMetadata().withName(service.getMetadata().getName())
+                .withNamespace(service.getMetadata().getNamespace())
+                .withLabels(service.getMetadata().getLabels())
+                .withAnnotations(service.getMetadata().getAnnotations())
+                .withFinalizers(service.getMetadata().getFinalizers()).endMetadata()
+                .withNewSpecLike(service.getSpec()).removeAllFromClusterIPs(service.getSpec().getClusterIPs())
+                .removeAllFromExternalIPs(service.getSpec().getExternalIPs())
+                .removeAllFromIpFamilies(service.getSpec().getIpFamilies())
+                .withClusterIP(null).withIpFamilyPolicy(null).endSpec().build();
+        openShiftClient.services().inNamespace(item.getNamespace()).create(destService);
     }
 
     @Override

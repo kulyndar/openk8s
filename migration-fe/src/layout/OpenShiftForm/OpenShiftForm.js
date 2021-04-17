@@ -1,6 +1,6 @@
 import {PureComponent} from "react";
 import {Form, Input, Button, Select} from 'antd';
-import {callApi, POST, ROUTE_OPENSHIFT_INIT} from "../../routes/API";
+import {callApi, POST, PUT, ROUTE_OPENSHIFT_INIT} from "../../routes/API";
 const { Option } = Select;
 
 const layout = {
@@ -41,7 +41,7 @@ export default class OpenShiftForm extends PureComponent {
 
     render() {
         const {authType} = this.state;
-        const onFinish = (values) => callApi(ROUTE_OPENSHIFT_INIT, POST, this.handleSuccess, this.onError, JSON.stringify(values));
+        const onFinish = (values) => callApi(ROUTE_OPENSHIFT_INIT, PUT, this.handleSuccess, this.onError, JSON.stringify(values));
 
         const onFinishFailed = (errorInfo) => {
             console.log('Failed:', errorInfo);

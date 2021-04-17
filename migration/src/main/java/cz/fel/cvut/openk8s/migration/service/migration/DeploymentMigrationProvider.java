@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import cz.fel.cvut.openk8s.migration.controller.resources.KubernetesResource;
 import cz.fel.cvut.openk8s.migration.exception.ItemNotFoundException;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.internal.SerializationUtils;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -29,7 +30,15 @@ public class DeploymentMigrationProvider implements MigrationProvider {
         if (deployment == null) {
             throw new ItemNotFoundException();
         }
-        openShiftClient.apps().deployments().inNamespace(item.getNamespace()).create(deployment);
+        Deployment destDepl = new DeploymentBuilder()
+                .withApiVersion(deployment.getApiVersion()).withKind(deployment.getKind())
+                .withNewMetadata().withName(deployment.getMetadata().getName())
+                .withNamespace(deployment.getMetadata().getNamespace())
+                .withLabels(deployment.getMetadata().getLabels())
+                .withAnnotations(deployment.getMetadata().getAnnotations())
+                .withFinalizers(deployment.getMetadata().getFinalizers()).endMetadata()
+                .withNewSpecLike(deployment.getSpec()).endSpec().build();
+        openShiftClient.apps().deployments().inNamespace(item.getNamespace()).create(destDepl);
     }
 
 

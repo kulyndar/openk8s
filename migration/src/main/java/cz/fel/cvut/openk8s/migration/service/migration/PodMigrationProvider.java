@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import cz.fel.cvut.openk8s.migration.controller.resources.KubernetesResource;
 import cz.fel.cvut.openk8s.migration.exception.ItemNotFoundException;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.internal.SerializationUtils;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -30,7 +31,15 @@ public class PodMigrationProvider implements MigrationProvider {
         if (pod == null) {
             throw new ItemNotFoundException();
         }
-        openShiftClient.pods().inNamespace(item.getNamespace()).create(pod);
+        Pod destPod = new PodBuilder()
+                .withApiVersion(pod.getApiVersion()).withKind(pod.getKind())
+                .withNewMetadata().withName(pod.getMetadata().getName())
+                .withNamespace(pod.getMetadata().getNamespace())
+                .withLabels(pod.getMetadata().getLabels())
+                .withAnnotations(pod.getMetadata().getAnnotations())
+                .withFinalizers(pod.getMetadata().getFinalizers()).endMetadata()
+                .withSpec(pod.getSpec()).build();
+        openShiftClient.pods().inNamespace(item.getNamespace()).create(destPod);
     }
 
     @Override

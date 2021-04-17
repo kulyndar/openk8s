@@ -6,7 +6,8 @@ export const BACKEND_HOST = process.env.REACT_APP_BACKEND_HOST;
 export const ROUTE_KUBERNETES_INFO = BACKEND_HOST + "/kubernetes/info/{kind}/{name}";
 export const ROUTE_KUBERNETES_CLUSTERINFO = BACKEND_HOST + "/kubernetes/clusterinfo";
 export const ROUTE_KUBERNETES_INIT = BACKEND_HOST + "/kubernetes/init";
-
+export const ROUTE_OPENSHIFT_INIT = BACKEND_HOST + "/openshift/init";
+export const ROUTE_OPENSHIFT_MIGRATE = BACKEND_HOST + "/openshift/migrate";
 
 export const GET = 'GET';
 export const POST = 'POST';

@@ -1,12 +1,15 @@
 import React, {PureComponent} from "react";
-import {Steps, Button, Layout, message} from "antd";
+import {Steps, Button, Layout, message, Result, Typography} from "antd";
 import {CloseOutlined}  from '@ant-design/icons';
 import KubernetesForm from "../KubernetesForm/KubernetesForm";
 import KubernetesClusterStructure from "../KubernetesClusterStructure/KubernetesClusterStructure";
 import OpenShiftForm from "../OpenShiftForm/OpenShiftForm";
+import {callApi, POST, ROUTE_OPENSHIFT_MIGRATE} from "../../routes/API";
+import CloseCircleOutlined from "@ant-design/icons/lib/icons/CloseCircleOutlined";
 
 const { Step } = Steps;
 const { Header, Content, Footer } = Layout;
+const { Paragraph, Text } = Typography;
 
 export default class Main extends PureComponent {
     constructor(props) {
@@ -54,8 +57,14 @@ export default class Main extends PureComponent {
     };
 
     onSubmit = (selectedItems) => {
-        //TODO
+        callApi(ROUTE_OPENSHIFT_MIGRATE, POST, this.handleMigrationSuccess, this.error, JSON.stringify(selectedItems))
     };
+
+    handleMigrationSuccess = (response) => {
+        this.setState({showResult: true, migrationResult: response});
+    };
+
+
 
     prepareSteps = () => {
         return [
@@ -69,15 +78,72 @@ export default class Main extends PureComponent {
             },
             {
                 title: 'Select data',
-                content: (<KubernetesClusterStructure onNext={this.next} onError={this.error} onSuccess={this.success} onPrev={this.prev}/>),
+                content: (<KubernetesClusterStructure onNext={this.next} onError={this.error} onSuccess={this.success} onPrev={this.prev} onSubmit={this.onSubmit}/>),
             },
         ];
     };
 
+    renderResult = () => {
+        const {migrationResult} = this.state;
+        if (!migrationResult || migrationResult.length === 0) {
+            return (<Result
+                status="success"
+                title="Cluster was successfully migrated!"
+                subTitle="Click the button bel return to the home page"
+                extra={[
+                    <Button type="primary" key="goHome" onClick={this.props.onClose}>
+                        Finish
+                    </Button>
+                ]}
+            />);
+        } else {
+            return (<Result
+                status="warning"
+                title="Some problems occurred during cluster migration."
+                subTitle="Some items were not migrated. See reasons below. Please, repair cluster and try again."
+                extra={[
+                    <Button type="primary" key="goHome" onClick={this.props.onClose}>
+                        Finish
+                    </Button>
+                ]}
+            >
+                <div className="desc">
+                    <Paragraph>
+                        <Text
+                            strong
+                            style={{
+                                fontSize: 16,
+                            }}
+                        >
+                            Following error occurred during migration:
+                        </Text>
+                    </Paragraph>
+                    {
+                        migrationResult.map(result => {
+                            let message = "";
+                            if (result.kind && result.name) {
+                                message =  <span>{result.kind} {result.name} was not migrated. Reason:
+                                <b>{result.cause} </b>{result.message}</span>
+                            } else {
+                                message = <span><b>{result.cause} </b>{result.message}</span>
+                            }
+                            return (
+                                <Paragraph>
+                                    <CloseCircleOutlined className="site-result-error-icon" /> {message}
+                                </Paragraph>
+                            );
+                        })
+                    }
+                </div>
+            </Result>);
+        }
+    };
+
     render() {
-        const {current} = this.state;
+        const {current, showResult} = this.state;
         const steps = this.prepareSteps();
         return (
+            showResult ? this.renderResult() :
             <Layout className="layout">
                 <Header className="header">
                     <Steps current={current}>

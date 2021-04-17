@@ -89,8 +89,9 @@ public class OpenshiftServiceBean implements OpenshiftService {
                 } else if (e.getStatus() != null) {
                     LOGGER.error("Error received in response from Kubernetes", e);
                     errors.add(MigrationErrorResource.fromStatus(e.getStatus(), new KubernetesResource(namespace, "Namespace")));
+                } else {
+                    errors.add(MigrationErrorResource.unexpected(new KubernetesResource(namespace, "Namespace")));
                 }
-                errors.add(MigrationErrorResource.unexpected(new KubernetesResource(namespace, "Namespace")));
             } catch (Exception e) {
                 LOGGER.error("Unexpected exception in namespace migration: " + new KubernetesResource(namespace, "Namespace"), e);
                 errors.add(MigrationErrorResource.unexpected(new KubernetesResource(namespace, "Namespace")));

@@ -32,8 +32,9 @@ public interface MigrationProvider {
                 } else if (e.getStatus() != null) {
                     getLogger().error("Error received in response from Kubernetes", e);
                     errors.add(MigrationErrorResource.fromStatus(e.getStatus(), item));
+                } else {
+                    errors.add(MigrationErrorResource.unexpected(item));
                 }
-                errors.add(MigrationErrorResource.unexpected(item));
             } catch (Exception e) {
                 getLogger().error("Unexpected exception in " + getKind() + " migration: " + item, e);
                 errors.add(MigrationErrorResource.unexpected(item));

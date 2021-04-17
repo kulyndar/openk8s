@@ -58,7 +58,7 @@ export default class KubernetesClusterStructure extends PureComponent {
                 childParentUidMap.set(ch.uid, parents);
             }
             const child = this.createResource(ch, parent);
-            const childrenRes = this.makeSubtree(ch.children, [...parents, child.uid], parentChildUidMap, uidMap, ch);
+            const childrenRes = this.makeSubtree(ch.children, [...parents, child.uid], parentChildUidMap, uidMap, ch, childParentUidMap);
             child.children.push(...childrenRes);
             parents.forEach(par => parentChildUidMap.get(par).push(ch.uid));
             data.push(child);

@@ -31,4 +31,16 @@ public class OpenShiftController {
         List<MigrationErrorResource> response = openshiftService.migrate(itemsList);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/rollback")
+    public ResponseEntity<List<MigrationErrorResource>> rollback() {
+        List<MigrationErrorResource> response = openshiftService.rollback();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/clear-rollback")
+    public ResponseEntity<Void> clearRollback() {
+        openshiftService.clearRollback();
+        return ResponseEntity.ok().build();
+    }
 }

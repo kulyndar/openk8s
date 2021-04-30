@@ -8,6 +8,8 @@ export const ROUTE_KUBERNETES_CLUSTERINFO = BACKEND_HOST + "/kubernetes/clusteri
 export const ROUTE_KUBERNETES_INIT = BACKEND_HOST + "/kubernetes/init";
 export const ROUTE_OPENSHIFT_INIT = BACKEND_HOST + "/openshift/init";
 export const ROUTE_OPENSHIFT_MIGRATE = BACKEND_HOST + "/openshift/migrate";
+export const ROUTE_OPENSHIFT_ROLLBACK = BACKEND_HOST + "/openshift/rollback";
+export const ROUTE_OPENSHIFT_CLEAR_ROLLBACK = BACKEND_HOST + "/openshift/clear-rollback";
 
 export const GET = 'GET';
 export const POST = 'POST';

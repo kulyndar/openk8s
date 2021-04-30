@@ -4,6 +4,8 @@ import cz.fel.cvut.openk8s.migration.controller.resources.KubernetesResource;
 import cz.fel.cvut.openk8s.migration.controller.resources.MigrationErrorResource;
 import cz.fel.cvut.openk8s.migration.controller.resources.StatusResource;
 import cz.fel.cvut.openk8s.migration.service.migration.MigrationProvider;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
@@ -35,6 +37,9 @@ public class OpenshiftServiceBean implements OpenshiftService {
     private KubernetesService kubernetesService;
 
     private OpenShiftClient openShiftClient;
+
+    //items are stores here to rollback migration if something goes wrong
+    private List<HasMetadata> createdItems = new ArrayList<>();
 
     @Override
     public StatusResource init(final String ocIp, final String authType, final String token, final String username, final String password) {
@@ -69,6 +74,7 @@ public class OpenshiftServiceBean implements OpenshiftService {
 
     @Override
     public List<MigrationErrorResource> migrate(List<KubernetesResource> itemsList) {
+        createdItems.clear();
         if (itemsList.isEmpty()) {
             return Collections.singletonList(new MigrationErrorResource("Empty content", "Please, select content for migration"));
         }
@@ -77,11 +83,12 @@ public class OpenshiftServiceBean implements OpenshiftService {
                 .collect(Collectors.toSet());
         for (String namespace : namespaces) {
             try {
-               openShiftClient.namespaces().create(new NamespaceBuilder()
+                Namespace ns = new NamespaceBuilder()
                         .withNewMetadata()
                         .withName(namespace)
                         .endMetadata()
-                        .build());
+                        .build();
+                openShiftClient.namespaces().create(ns);
             } catch (KubernetesClientException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
                     LOGGER.error("ConnectionException: cannot connect to the cluster", e);
@@ -100,12 +107,31 @@ public class OpenshiftServiceBean implements OpenshiftService {
             for (MigrationProvider provider : migrationProviders) {
                 List<KubernetesResource> itemsToMigrate = itemsList.stream().filter(item -> provider.isResponsibleFor(item.getKind()))
                         .collect(Collectors.toList());
-                errors.addAll(provider.migrate(itemsToMigrate, kubernetesService.getKubernetesClient(), openShiftClient));
+                errors.addAll(provider.migrate(itemsToMigrate, kubernetesService.getKubernetesClient(), openShiftClient, (item) -> this.createdItems.add(item)));
             }
         }
         //todo migrate out-of-namespaces items
 
         return errors;
+    }
+
+    @Override
+    public List<MigrationErrorResource> rollback() {
+        List<MigrationErrorResource> errors = new ArrayList<>();
+        if (this.createdItems == null || this.createdItems.isEmpty()) {
+            return errors;
+        }
+        for (MigrationProvider provider : migrationProviders) {
+            List<HasMetadata> itemsToRollback = createdItems.stream().filter(item -> provider.isResponsibleFor(item.getKind()))
+                    .collect(Collectors.toList());
+            errors.addAll(provider.rollback(itemsToRollback, openShiftClient));
+        }
+        return errors;
+    }
+
+    @Override
+    public void clearRollback() {
+        this.createdItems.clear();
     }
 
     @Override

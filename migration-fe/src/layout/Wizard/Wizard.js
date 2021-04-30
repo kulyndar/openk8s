@@ -1,10 +1,16 @@
 import React, {PureComponent} from "react";
-import {Steps, Button, Layout, message, Result, Typography} from "antd";
+import {Steps, Button, Layout, message, Result, Typography, Space, Popconfirm} from "antd";
 import {CloseOutlined}  from '@ant-design/icons';
 import KubernetesForm from "../KubernetesForm/KubernetesForm";
 import KubernetesClusterStructure from "../KubernetesClusterStructure/KubernetesClusterStructure";
 import OpenShiftForm from "../OpenShiftForm/OpenShiftForm";
-import {callApi, POST, ROUTE_OPENSHIFT_MIGRATE} from "../../routes/API";
+import {
+    callApi,
+    POST,
+    ROUTE_OPENSHIFT_CLEAR_ROLLBACK,
+    ROUTE_OPENSHIFT_MIGRATE,
+    ROUTE_OPENSHIFT_ROLLBACK
+} from "../../routes/API";
 import CloseCircleOutlined from "@ant-design/icons/lib/icons/CloseCircleOutlined";
 import FooterContent from "../Footer/FooterContent";
 
@@ -65,6 +71,19 @@ export default class Main extends PureComponent {
         this.setState({showResult: true, migrationResult: response});
     };
 
+    handleRollbackSuccess = (response) => {
+        this.setState({showRollbackResult: true, showResult: false,  rollbackResult: response});
+    };
+
+    onRollback = () => {
+        callApi(ROUTE_OPENSHIFT_ROLLBACK, POST, this.handleRollbackSuccess, this.error);
+    };
+
+    onClose = () => {
+        callApi(ROUTE_OPENSHIFT_CLEAR_ROLLBACK, POST, () => {}, this.error, null, (r) => r.text());
+        this.props.onClose();
+    };
+
     prepareSteps = () => {
         return [
             {
@@ -90,9 +109,16 @@ export default class Main extends PureComponent {
                 title="Cluster was successfully migrated!"
                 subTitle="Click the button bel return to the home page"
                 extra={[
-                    <Button type="primary" key="goHome" onClick={this.props.onClose}>
-                        Finish
-                    </Button>
+                    <Space>
+                        <Button type="primary" key="goHome" onClick={this.onClose}>
+                            Finish
+                        </Button>
+                        <Popconfirm title="Are you sure？ All migrated items except namespaces will be deleted." okText="Yes" cancelText="No" onConfirm={this.onRollback}>
+                            <Button type="danger" key="rollback">
+                            Rollback changes
+                        </Button>
+                        </Popconfirm>
+                    </Space>
                 ]}
             />);
         } else {
@@ -101,10 +127,17 @@ export default class Main extends PureComponent {
                 title="Some problems occurred during cluster migration."
                 subTitle="Some items were not migrated. See reasons below. Please, repair cluster and try again."
                 extra={[
-                    <Button type="primary" key="goHome" onClick={this.props.onClose}>
+                    <Space>
+                    <Button type="primary" key="goHome" onClick={this.onClose}>
                         Finish
                     </Button>
-                ]}
+                        <Popconfirm title="Are you sure？ All migrated items except namespaces will be deleted." okText="Yes" cancelText="No" onConfirm={this.onRollback}>
+                            <Button type="danger" key="rollback">
+                                Rollback changes
+                            </Button>
+                        </Popconfirm>
+                    </Space>
+                        ]}
             >
                 <div className="desc">
                     <Paragraph>
@@ -138,11 +171,68 @@ export default class Main extends PureComponent {
         }
     };
 
+    renderRollbackResult = () => {
+        const {rollbackResult} = this.state;
+        if (!rollbackResult || rollbackResult.length === 0) {
+            return (<Result
+                status="success"
+                title="Changes were successfully rollbacked!"
+                subTitle="Click the button bel return to the home page"
+                extra={[
+                    <Button type="primary" key="goHome" onClick={this.props.onClose}>
+                        Finish
+                    </Button>
+                ]}
+            />);
+        } else {
+            return (<Result
+                status="warning"
+                title="Some problems occurred during rollback operation."
+                subTitle="Some items were not rollbacked. See reasons below. Please, repair cluster manually."
+                extra={[
+                    <Button type="primary" key="goHome" onClick={this.props.onClose}>
+                        Finish
+                    </Button>
+                ]}
+            >
+                <div className="desc">
+                    <Paragraph>
+                        <Text
+                            strong
+                            style={{
+                                fontSize: 16,
+                            }}
+                        >
+                            Following error occurred during rollback:
+                        </Text>
+                    </Paragraph>
+                    {
+                        rollbackResult.map(result => {
+                            let message;
+                            if (result.kind && result.name) {
+                                message =  <span>{result.kind} {result.name} was not migrated. Reason:
+                                <b>{result.cause} </b>{result.message}</span>
+                            } else {
+                                message = <span><b>{result.cause} </b>{result.message}</span>
+                            }
+                            return (
+                                <Paragraph>
+                                    <CloseCircleOutlined className="site-result-error-icon" /> {message}
+                                </Paragraph>
+                            );
+                        })
+                    }
+                </div>
+            </Result>);
+        }
+    };
+
     render() {
-        const {current, showResult} = this.state;
+        const {current, showResult, showRollbackResult} = this.state;
         const steps = this.prepareSteps();
         return (
-            showResult ?
+            <div>
+            {showResult &&
                 <Layout className='layout'>
                     <Content>
                         {this.renderResult()}
@@ -150,8 +240,18 @@ export default class Main extends PureComponent {
                     <Footer>
                         <FooterContent />
                     </Footer>
-                </Layout>
-                :
+                </Layout>}
+            {showRollbackResult &&
+            <Layout className='layout'>
+                <Content>
+                    {this.renderRollbackResult()}
+                </Content>
+                <Footer>
+                    <FooterContent />
+                </Footer>
+            </Layout>
+            }
+            {!showResult && !showRollbackResult &&
             <Layout className="layout">
                 <Header className="header">
                     <Steps current={current}>
@@ -168,6 +268,8 @@ export default class Main extends PureComponent {
                     <FooterContent />
                 </Footer>
             </Layout>
+            }
+            </div>
         );
     };
 }

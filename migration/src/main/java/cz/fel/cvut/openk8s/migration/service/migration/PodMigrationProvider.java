@@ -3,6 +3,7 @@ package cz.fel.cvut.openk8s.migration.service.migration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import cz.fel.cvut.openk8s.migration.controller.resources.KubernetesResource;
 import cz.fel.cvut.openk8s.migration.exception.ItemNotFoundException;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -26,7 +27,7 @@ public class PodMigrationProvider implements MigrationProvider {
     }
 
     @Override
-    public void migrateResource(KubernetesResource item, KubernetesClient kubernetesClient, OpenShiftClient openShiftClient) {
+    public Pod migrateResource(KubernetesResource item, KubernetesClient kubernetesClient, OpenShiftClient openShiftClient) {
         Pod pod = kubernetesClient.pods().inNamespace(item.getNamespace()).withName(item.getName()).get();
         if (pod == null) {
             throw new ItemNotFoundException();
@@ -40,6 +41,7 @@ public class PodMigrationProvider implements MigrationProvider {
                 .withFinalizers(pod.getMetadata().getFinalizers()).endMetadata()
                 .withSpec(pod.getSpec()).build();
         openShiftClient.pods().inNamespace(item.getNamespace()).create(destPod);
+        return destPod;
     }
 
     @Override
@@ -51,5 +53,10 @@ public class PodMigrationProvider implements MigrationProvider {
     @Override
     public Logger getLogger() {
         return LOGGER;
+    }
+
+    @Override
+    public void rollbackResource(HasMetadata item, OpenShiftClient openShiftClient) {
+        openShiftClient.pods().inNamespace(item.getMetadata().getNamespace()).withName(item.getMetadata().getName()).delete();
     }
 }

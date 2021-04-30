@@ -10,6 +10,10 @@ public interface OpenshiftService {
 
     StatusResource init(String ocIp, String authType, String token, String username, String password);
 
+    List<MigrationErrorResource> rollback();
+
+    void clearRollback();
+
     void destroy();
 
     List<MigrationErrorResource> migrate(List<KubernetesResource> itemsList);

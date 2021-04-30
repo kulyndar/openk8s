@@ -1,5 +1,7 @@
 package cz.fel.cvut.openk8s.migration.controller.resources;
 
+import io.fabric8.kubernetes.api.model.HasMetadata;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,14 @@ public class KubernetesResource implements Serializable {
         this.kind = kind;
         this.namespace = namespace;
         this.uid = uid;
+        this.children = new ArrayList<>();
+    }
+
+    public KubernetesResource(HasMetadata item) {
+        this.name = item.getMetadata().getName();
+        this.kind = item.getKind();
+        this.namespace = item.getMetadata().getNamespace();
+        this.uid = item.getMetadata().getUid();
         this.children = new ArrayList<>();
     }
 

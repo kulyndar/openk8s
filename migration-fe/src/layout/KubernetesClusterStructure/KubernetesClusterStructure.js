@@ -179,6 +179,11 @@ export default class KubernetesClusterStructure extends PureComponent {
                 onCancel={() => this.setState({openInfoModal: false, infoModalItem: null, infoForModal: null})}
                 cancelText={"Close"}
                 width={1000}
+                footer={[
+                    <Button key="back" onClick={() => this.setState({openInfoModal: false, infoModalItem: null, infoForModal: null})}>
+                        Close
+                    </Button>
+                ]}
             >
                 <div><pre className="yaml" >{yaml.dump(infoForModal)}</pre></div>
 
@@ -233,9 +238,10 @@ export default class KubernetesClusterStructure extends PureComponent {
         if (!clusterStructure && (!messages || messages.length === 0)) {
             return <Empty />;
         }
-        return (<div>
+        return (<div >
             {this.renderModal()}
             {this.renderMessages()}
+            <div className="cluster-info">
             {clusterStructure.map(ns => {
             return (
             <div>
@@ -251,14 +257,17 @@ export default class KubernetesClusterStructure extends PureComponent {
                     /> : <Empty /> }
             </div>);
         })}
-        <Space>
-            <Button type="default" onClick={this.props.onPrev}>
-                Back
-            </Button>
-            <Button type="primary" htmlType="submit" onClick={this.onSubmit}>
-                Migrate
-            </Button>
-        </Space>
+            </div>
+            <div className="migration-buttons">
+                <Space>
+                    <Button type="default" onClick={this.props.onPrev}>
+                        Back
+                    </Button>
+                    <Button type="primary" htmlType="submit" onClick={this.onSubmit}>
+                        Migrate
+                    </Button>
+                </Space>
+            </div>
         </div>)
 
     }

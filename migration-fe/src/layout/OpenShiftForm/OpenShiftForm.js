@@ -1,6 +1,6 @@
 import {PureComponent} from "react";
-import {Form, Input, Button, Select} from 'antd';
-import {callApi, POST, PUT, ROUTE_OPENSHIFT_INIT} from "../../routes/API";
+import {Form, Input, Button, Select, Space} from 'antd';
+import {callApi, PUT, ROUTE_OPENSHIFT_INIT} from "../../routes/API";
 const { Option } = Select;
 
 const layout = {
@@ -130,12 +130,14 @@ export default class OpenShiftForm extends PureComponent {
                 }
 
                 <Form.Item {...tailLayout}>
-                    <Button type="default" onClick={this.props.onPrev}>
-                        Back
-                    </Button>
-                    <Button type="primary" htmlType="submit">
-                        Next
-                    </Button>
+                    <Space>
+                        <Button type="default" onClick={this.props.onPrev}>
+                            Back
+                        </Button>
+                        <Button type="primary" htmlType="submit">
+                            Next
+                        </Button>
+                    </Space>
                 </Form.Item>
             </Form>
         );

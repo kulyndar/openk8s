@@ -6,6 +6,7 @@ import KubernetesClusterStructure from "../KubernetesClusterStructure/Kubernetes
 import OpenShiftForm from "../OpenShiftForm/OpenShiftForm";
 import {callApi, POST, ROUTE_OPENSHIFT_MIGRATE} from "../../routes/API";
 import CloseCircleOutlined from "@ant-design/icons/lib/icons/CloseCircleOutlined";
+import FooterContent from "../Footer/FooterContent";
 
 const { Step } = Steps;
 const { Header, Content, Footer } = Layout;
@@ -64,8 +65,6 @@ export default class Main extends PureComponent {
         this.setState({showResult: true, migrationResult: response});
     };
 
-
-
     prepareSteps = () => {
         return [
             {
@@ -120,7 +119,7 @@ export default class Main extends PureComponent {
                     </Paragraph>
                     {
                         migrationResult.map(result => {
-                            let message = "";
+                            let message;
                             if (result.kind && result.name) {
                                 message =  <span>{result.kind} {result.name} was not migrated. Reason:
                                 <b>{result.cause} </b>{result.message}</span>
@@ -143,7 +142,16 @@ export default class Main extends PureComponent {
         const {current, showResult} = this.state;
         const steps = this.prepareSteps();
         return (
-            showResult ? this.renderResult() :
+            showResult ?
+                <Layout className='layout'>
+                    <Content>
+                        {this.renderResult()}
+                    </Content>
+                    <Footer>
+                        <FooterContent />
+                    </Footer>
+                </Layout>
+                :
             <Layout className="layout">
                 <Header className="header">
                     <Steps current={current}>
@@ -154,8 +162,11 @@ export default class Main extends PureComponent {
                     <CloseOutlined onClick={this.props.onClose} className="closeButton" />
                 </Header>
                 <Content>
-                    <div className="steps-content">{steps[current].content}</div>
+                    <div className={"steps-content steps-content-" + current}>{steps[current].content}</div>
                 </Content>
+                <Footer>
+                    <FooterContent />
+                </Footer>
             </Layout>
         );
     };

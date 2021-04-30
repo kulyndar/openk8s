@@ -13,6 +13,7 @@ import {
 } from "../../routes/API";
 import CloseCircleOutlined from "@ant-design/icons/lib/icons/CloseCircleOutlined";
 import FooterContent from "../Footer/FooterContent";
+import CheckCircleOutlined from "@ant-design/icons/lib/icons/CheckCircleOutlined";
 
 const { Step } = Steps;
 const { Header, Content, Footer } = Layout;
@@ -101,9 +102,85 @@ export default class Main extends PureComponent {
         ];
     };
 
+    renderResultOk = (messageOK) => {
+        return messageOK && messageOK.length > 0 &&
+            (<div className="desc">
+                <Paragraph>
+                    <Text
+                        strong
+                        style={{
+                            fontSize: 16,
+                        }}
+                    >
+                        Following items were successfully migrated:
+                    </Text>
+                </Paragraph>
+                {
+                    messageOK.map(result => {
+                        let message;
+                        if (result.kind && result.name) {
+                            message =  <span>{result.kind} {result.name} was migrated. </span>
+                        }
+                        return (
+                            <Paragraph>
+                                <CheckCircleOutlined className="site-result-ok-icon" /> {message}
+                            </Paragraph>
+                        );
+                    })
+                }
+            </div>);
+    };
+
+    renderResultErrors = (messageErrors) => {
+        return messageErrors && messageErrors.length > 0 &&
+            (<div className="desc">
+                <Paragraph>
+                    <Text
+                        strong
+                        style={{
+                            fontSize: 16,
+                        }}
+                    >
+                        Following error occurred during migration:
+                    </Text>
+                </Paragraph>
+                {
+                    messageErrors.map(result => {
+                        let message;
+                        if (result.kind && result.name) {
+                            message =  <span>{result.kind} {result.name} was not migrated. Reason:
+                                <b>{result.cause} </b>{result.message}</span>
+                        } else {
+                            message = <span><b>{result.cause} </b>{result.message}</span>
+                        }
+                        return (
+                            <Paragraph>
+                                <CloseCircleOutlined className="site-result-error-icon" /> {message}
+                            </Paragraph>
+                        );
+                    })
+                }
+                <Paragraph>
+                    <Text
+                        strong
+                        style={{
+                            fontSize: 16,
+                        }}
+                    >
+                        To check result run the following command in your cluster for each object:
+                    </Text>
+                </Paragraph>
+                <Paragraph>
+                    <Text code>oc get -n [namespace] [type] [name]</Text>
+                </Paragraph>
+            </div>);
+    };
+
     renderResult = () => {
         const {migrationResult} = this.state;
-        if (!migrationResult || migrationResult.length === 0) {
+        const migrationOk = migrationResult && migrationResult.filter(item => item.success);
+        const migrationErrors = migrationResult && migrationResult.filter(item => !item.success);
+        if (!migrationErrors || migrationErrors.length === 0) {
             return (<Result
                 status="success"
                 title="Cluster was successfully migrated!"
@@ -120,7 +197,9 @@ export default class Main extends PureComponent {
                         </Popconfirm>
                     </Space>
                 ]}
-            />);
+            >
+                {this.renderResultOk(migrationOk)}
+            </Result>);
         } else {
             return (<Result
                 status="warning"
@@ -139,34 +218,8 @@ export default class Main extends PureComponent {
                     </Space>
                         ]}
             >
-                <div className="desc">
-                    <Paragraph>
-                        <Text
-                            strong
-                            style={{
-                                fontSize: 16,
-                            }}
-                        >
-                            Following error occurred during migration:
-                        </Text>
-                    </Paragraph>
-                    {
-                        migrationResult.map(result => {
-                            let message;
-                            if (result.kind && result.name) {
-                                message =  <span>{result.kind} {result.name} was not migrated. Reason:
-                                <b>{result.cause} </b>{result.message}</span>
-                            } else {
-                                message = <span><b>{result.cause} </b>{result.message}</span>
-                            }
-                            return (
-                                <Paragraph>
-                                    <CloseCircleOutlined className="site-result-error-icon" /> {message}
-                                </Paragraph>
-                            );
-                        })
-                    }
-                </div>
+                {this.renderResultErrors(migrationErrors)}
+                {this.renderResultOk(migrationOk)}
             </Result>);
         }
     };

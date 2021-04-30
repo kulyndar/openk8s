@@ -2,7 +2,7 @@ package cz.fel.cvut.openk8s.migration.controller;
 
 import cz.fel.cvut.openk8s.migration.controller.resources.InitOpenshiftResource;
 import cz.fel.cvut.openk8s.migration.controller.resources.KubernetesResource;
-import cz.fel.cvut.openk8s.migration.controller.resources.MigrationErrorResource;
+import cz.fel.cvut.openk8s.migration.controller.resources.MigrationResultResource;
 import cz.fel.cvut.openk8s.migration.controller.resources.StatusResource;
 import cz.fel.cvut.openk8s.migration.service.OpenshiftService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,14 +27,14 @@ public class OpenShiftController {
     }
 
     @PostMapping("/migrate")
-    public ResponseEntity<List<MigrationErrorResource>> migrate(@RequestBody List<KubernetesResource> itemsList) {
-        List<MigrationErrorResource> response = openshiftService.migrate(itemsList);
+    public ResponseEntity<List<MigrationResultResource>> migrate(@RequestBody List<KubernetesResource> itemsList) {
+        List<MigrationResultResource> response = openshiftService.migrate(itemsList);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/rollback")
-    public ResponseEntity<List<MigrationErrorResource>> rollback() {
-        List<MigrationErrorResource> response = openshiftService.rollback();
+    public ResponseEntity<List<MigrationResultResource>> rollback() {
+        List<MigrationResultResource> response = openshiftService.rollback();
         return ResponseEntity.ok(response);
     }
 

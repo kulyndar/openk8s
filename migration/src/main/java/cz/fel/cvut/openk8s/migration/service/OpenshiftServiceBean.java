@@ -1,7 +1,7 @@
 package cz.fel.cvut.openk8s.migration.service;
 
 import cz.fel.cvut.openk8s.migration.controller.resources.KubernetesResource;
-import cz.fel.cvut.openk8s.migration.controller.resources.MigrationErrorResource;
+import cz.fel.cvut.openk8s.migration.controller.resources.MigrationResultResource;
 import cz.fel.cvut.openk8s.migration.controller.resources.StatusResource;
 import cz.fel.cvut.openk8s.migration.service.migration.MigrationProvider;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -73,12 +73,12 @@ public class OpenshiftServiceBean implements OpenshiftService {
     }
 
     @Override
-    public List<MigrationErrorResource> migrate(List<KubernetesResource> itemsList) {
+    public List<MigrationResultResource> migrate(List<KubernetesResource> itemsList) {
         createdItems.clear();
         if (itemsList.isEmpty()) {
-            return Collections.singletonList(new MigrationErrorResource("Empty content", "Please, select content for migration"));
+            return Collections.singletonList(new MigrationResultResource("Empty content", "Please, select content for migration"));
         }
-        List<MigrationErrorResource> errors = new ArrayList<>();
+        List<MigrationResultResource> errors = new ArrayList<>();
         Set<String> namespaces = itemsList.stream().filter(item -> Objects.nonNull(item.getNamespace())).map(KubernetesResource::getNamespace)
                 .collect(Collectors.toSet());
         for (String namespace : namespaces) {
@@ -89,19 +89,20 @@ public class OpenshiftServiceBean implements OpenshiftService {
                         .endMetadata()
                         .build();
                 openShiftClient.namespaces().create(ns);
+                createdItems.add(ns);
             } catch (KubernetesClientException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
                     LOGGER.error("ConnectionException: cannot connect to the cluster", e);
-                    errors.add(MigrationErrorResource.connectionError(new KubernetesResource(namespace, "Namespace")));
+                    errors.add(MigrationResultResource.connectionError(new KubernetesResource(namespace, "Namespace")));
                 } else if (e.getStatus() != null) {
                     LOGGER.error("Error received in response from Kubernetes", e);
-                    errors.add(MigrationErrorResource.fromStatus(e.getStatus(), new KubernetesResource(namespace, "Namespace")));
+                    errors.add(MigrationResultResource.fromStatus(e.getStatus(), new KubernetesResource(namespace, "Namespace")));
                 } else {
-                    errors.add(MigrationErrorResource.unexpected(new KubernetesResource(namespace, "Namespace")));
+                    errors.add(MigrationResultResource.unexpected(new KubernetesResource(namespace, "Namespace")));
                 }
             } catch (Exception e) {
                 LOGGER.error("Unexpected exception in namespace migration: " + new KubernetesResource(namespace, "Namespace"), e);
-                errors.add(MigrationErrorResource.unexpected(new KubernetesResource(namespace, "Namespace")));
+                errors.add(MigrationResultResource.unexpected(new KubernetesResource(namespace, "Namespace")));
             }
 
             for (MigrationProvider provider : migrationProviders) {
@@ -111,13 +112,13 @@ public class OpenshiftServiceBean implements OpenshiftService {
             }
         }
         //todo migrate out-of-namespaces items
-
+        createdItems.stream().map(item -> MigrationResultResource.ok(new KubernetesResource(item))).forEach(errors::add);
         return errors;
     }
 
     @Override
-    public List<MigrationErrorResource> rollback() {
-        List<MigrationErrorResource> errors = new ArrayList<>();
+    public List<MigrationResultResource> rollback() {
+        List<MigrationResultResource> errors = new ArrayList<>();
         if (this.createdItems == null || this.createdItems.isEmpty()) {
             return errors;
         }

@@ -18,3 +18,14 @@ Please, notice that app will need to have appropriate users with roles in your c
 For Kubernetes cluster, please ensure, that application account has capabilities to 
 read all objects. For OpenShift, the app has to have ability to list namespaces 
 and to create and delete objects.
+
+## Supported Kubernetes objects
+
+In current version the following Kubernetes objects are supported:
+1. Deployment
+2. Pod
+3. Service
+4. ReplicaSet
+5. Secret
+6. ServiceAccount
+7. ConfigMap

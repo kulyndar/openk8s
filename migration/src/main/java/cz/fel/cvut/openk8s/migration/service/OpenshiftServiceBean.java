@@ -106,7 +106,9 @@ public class OpenshiftServiceBean implements OpenshiftService {
             }
 
             for (MigrationProvider provider : migrationProviders) {
-                List<KubernetesResource> itemsToMigrate = itemsList.stream().filter(item -> provider.isResponsibleFor(item.getKind()))
+                List<KubernetesResource> itemsToMigrate = itemsList.stream()
+                        .filter(item -> namespace.equals(item.getNamespace()))
+                        .filter(item -> provider.isResponsibleFor(item.getKind()))
                         .collect(Collectors.toList());
                 errors.addAll(provider.migrate(itemsToMigrate, kubernetesService.getKubernetesClient(), openShiftClient, (item) -> this.createdItems.add(item)));
             }

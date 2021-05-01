@@ -111,3 +111,9 @@ body {
 .footer .colLinks {
   text-align: left;
 }
+.site-result-ok-icon {
+  color: green;
+}
+.site-result-error-icon {
+  color: red;
+}

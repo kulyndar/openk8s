@@ -119,43 +119,11 @@ export default class Main extends PureComponent {
                     messageOK.map(result => {
                         let message;
                         if (result.kind && result.name) {
-                            message =  <span>{result.kind} {result.name} was migrated. </span>
+                            message =  <span>{result.kind} {result.name} {result.namespace && "(namespace " + result.namespace+ ")"} was migrated. </span>
                         }
                         return (
                             <Paragraph>
                                 <CheckCircleOutlined className="site-result-ok-icon" /> {message}
-                            </Paragraph>
-                        );
-                    })
-                }
-            </div>);
-    };
-
-    renderResultErrors = (messageErrors) => {
-        return messageErrors && messageErrors.length > 0 &&
-            (<div className="desc">
-                <Paragraph>
-                    <Text
-                        strong
-                        style={{
-                            fontSize: 16,
-                        }}
-                    >
-                        Following error occurred during migration:
-                    </Text>
-                </Paragraph>
-                {
-                    messageErrors.map(result => {
-                        let message;
-                        if (result.kind && result.name) {
-                            message =  <span>{result.kind} {result.name} was not migrated. Reason:
-                                <b>{result.cause} </b>{result.message}</span>
-                        } else {
-                            message = <span><b>{result.cause} </b>{result.message}</span>
-                        }
-                        return (
-                            <Paragraph>
-                                <CloseCircleOutlined className="site-result-error-icon" /> {message}
                             </Paragraph>
                         );
                     })
@@ -176,6 +144,38 @@ export default class Main extends PureComponent {
             </div>);
     };
 
+    renderResultErrors = (messageErrors) => {
+        return messageErrors && messageErrors.length > 0 &&
+            (<div className="desc">
+                <Paragraph>
+                    <Text
+                        strong
+                        style={{
+                            fontSize: 16,
+                        }}
+                    >
+                        Following error occurred during migration:
+                    </Text>
+                </Paragraph>
+                {
+                    messageErrors.map(result => {
+                        let message;
+                        if (result.kind && result.name) {
+                            message =  <span>{result.kind} {result.name} {result.namespace && "(namespace " + result.namespace+ ")"} was not migrated. Reason:
+                                <b>{result.cause} </b>{result.message}</span>
+                        } else {
+                            message = <span><b>{result.cause} </b>{result.message}</span>
+                        }
+                        return (
+                            <Paragraph>
+                                <CloseCircleOutlined className="site-result-error-icon" /> {message}
+                            </Paragraph>
+                        );
+                    })
+                }
+            </div>);
+    };
+
     renderResult = () => {
         const {migrationResult} = this.state;
         const migrationOk = migrationResult && migrationResult.filter(item => item.success);
@@ -184,7 +184,7 @@ export default class Main extends PureComponent {
             return (<Result
                 status="success"
                 title="Cluster was successfully migrated!"
-                subTitle="Click the button bel return to the home page"
+                subTitle="Click the button below return to the home page"
                 extra={[
                     <Space>
                         <Button type="primary" key="goHome" onClick={this.onClose}>
@@ -230,7 +230,7 @@ export default class Main extends PureComponent {
             return (<Result
                 status="success"
                 title="Changes were successfully rollbacked!"
-                subTitle="Click the button bel return to the home page"
+                subTitle="Click the button below return to the home page"
                 extra={[
                     <Button type="primary" key="goHome" onClick={this.props.onClose}>
                         Finish

@@ -10,6 +10,7 @@ public class MigrationResultResource implements Serializable {
     private boolean success;
     private String kind;
     private String name;
+    private String namespace;
 
     public MigrationResultResource(String cause, String message) {
         this.cause = cause;
@@ -19,6 +20,7 @@ public class MigrationResultResource implements Serializable {
     private MigrationResultResource(KubernetesResource item) {
         this.kind = item.getKind();
         this.name = item.getName();
+        this.namespace = item.getNamespace();
     }
 
     public MigrationResultResource(KubernetesResource item, String cause, String message) {
@@ -72,4 +74,9 @@ public class MigrationResultResource implements Serializable {
     public String getName() {
         return name;
     }
+
+    public String getNamespace() {
+        return namespace;
+    }
 }
+

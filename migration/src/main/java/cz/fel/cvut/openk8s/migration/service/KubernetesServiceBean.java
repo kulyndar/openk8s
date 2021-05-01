@@ -111,7 +111,31 @@ public class KubernetesServiceBean implements KubernetesService {
                 services.add(serviceResource);
             }
             namespaceResource.getChildren().addAll(services);
-            //TODO add other resource
+
+
+            SecretList secretList = kubernetesClient.secrets().inNamespace(namespace.getMetadata().getName()).list();
+            List<KubernetesResource> secrets = new ArrayList<>();
+            for (Secret secret : secretList.getItems()) {
+                KubernetesResource secretResource = createResource(secret);
+                secrets.add(secretResource);
+            }
+            namespaceResource.getChildren().addAll(secrets);
+
+            ConfigMapList configMapList = kubernetesClient.configMaps().inNamespace(namespace.getMetadata().getName()).list();
+            List<KubernetesResource> configMaps = new ArrayList<>();
+            for (ConfigMap configMap : configMapList.getItems()) {
+                KubernetesResource configMapResource = createResource(configMap);
+                configMaps.add(configMapResource);
+            }
+            namespaceResource.getChildren().addAll(configMaps);
+
+            ServiceAccountList serviceAccountList = kubernetesClient.serviceAccounts().inNamespace(namespace.getMetadata().getName()).list();
+            List<KubernetesResource> serviceAccounts = new ArrayList<>();
+            for (ServiceAccount serviceAccount : serviceAccountList.getItems()) {
+                KubernetesResource serviceAccountResource = createResource(serviceAccount);
+                serviceAccounts.add(serviceAccountResource);
+            }
+            namespaceResource.getChildren().addAll(serviceAccounts);
 
             namespaceResourceList.add(namespaceResource);
         }

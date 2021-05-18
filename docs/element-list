@@ -1,0 +1,6 @@
+cz.fel.cvut.openk8s.migration
+cz.fel.cvut.openk8s.migration.controller
+cz.fel.cvut.openk8s.migration.controller.resources
+cz.fel.cvut.openk8s.migration.exception
+cz.fel.cvut.openk8s.migration.service
+cz.fel.cvut.openk8s.migration.service.migration

@@ -7,8 +7,6 @@ Please, notice that app will need to have appropriate roles in your clusters. Fo
 
 To start tour journey, please download the app using manual on [GitHub](https://github.com/kulyndar/openk8s).
 
-# User manual
-
 # Technical documentation
 Javadoc is available [here](https://kulyndar.github.io/openk8s/docs). 
 

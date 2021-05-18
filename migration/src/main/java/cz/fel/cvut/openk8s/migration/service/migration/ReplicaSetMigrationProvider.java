@@ -14,6 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+/**
+ * Manages ReplicaSet objects
+ */
 @Component
 @Order(2)
 public class ReplicaSetMigrationProvider implements MigrationProvider {

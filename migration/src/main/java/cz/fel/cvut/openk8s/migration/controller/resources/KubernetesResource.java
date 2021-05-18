@@ -6,6 +6,16 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * API resource.
+ * Represents Kubernetes object.
+ * Structure:
+ *      name - Kubernetes object name
+ *      kind - Kubernetes object kind
+ *      namespace - Kubernetes object namespace
+ *      uid - Kubernetes object uid
+ *      children - list of children
+ */
 public class KubernetesResource implements Serializable {
     private String name;
     private String kind;

@@ -8,6 +8,9 @@ import javax.servlet.annotation.WebListener;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
+/**
+ * This class is used to close connections to Kubernetes and OpenShift clusters when user session closes.
+ */
 @WebListener
 public class CustomSessionListener implements HttpSessionListener {
 

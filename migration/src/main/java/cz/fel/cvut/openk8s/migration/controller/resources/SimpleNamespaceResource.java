@@ -3,6 +3,13 @@ package cz.fel.cvut.openk8s.migration.controller.resources;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * API resource.
+ * Represents Kubernetes namespace.
+ * Structure:
+ *      name - Kubernetes namespace name
+ *      children - list of children
+ */
 public class SimpleNamespaceResource {
     private String name;
     private List<KubernetesResource> children;

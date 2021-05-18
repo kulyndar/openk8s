@@ -15,6 +15,9 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+/**
+ * Manages Service objects
+ */
 @Component
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class ServiceMigrationProvider implements MigrationProvider {

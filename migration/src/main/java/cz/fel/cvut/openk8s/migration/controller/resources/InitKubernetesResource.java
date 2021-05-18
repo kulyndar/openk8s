@@ -1,5 +1,14 @@
 package cz.fel.cvut.openk8s.migration.controller.resources;
 
+/**
+ * API resource
+ * Structure:
+ *      kubeip - Kubernetes master node URL
+ *      authType - authentication type ('boot' or 'token')
+ *      tokenId - Bootstrap token id
+ *      tokenSecret - Bootstrap token secret
+ *      token - user token
+ */
 public class InitKubernetesResource {
 
     private String kubeip;

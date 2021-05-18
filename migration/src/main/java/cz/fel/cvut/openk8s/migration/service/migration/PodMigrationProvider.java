@@ -15,6 +15,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 
+/**
+ * Manages Pod objects
+ */
 @Component
 @Order(1)
 public class PodMigrationProvider implements MigrationProvider {

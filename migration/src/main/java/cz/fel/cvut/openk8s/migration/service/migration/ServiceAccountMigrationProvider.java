@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
+/**
+ * Manages ServiceAccount objects
+ */
 @Component
 public class ServiceAccountMigrationProvider implements MigrationProvider {
 

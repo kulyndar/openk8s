@@ -3,7 +3,17 @@ package cz.fel.cvut.openk8s.migration.controller.resources;
 import io.fabric8.kubernetes.api.model.Status;
 
 import java.io.Serializable;
-
+/**
+ * API resource.
+ * Represents migration result object.
+ * Structure:
+ *      cause - main message information
+ *      message - additional information
+ *      success - true if message represent successfully finished event
+ *      kind - owner Kubernetes object kind
+ *      name - owner Kubernetes object name
+ *      namespace - owner Kubernetes object namespace
+ */
 public class MigrationResultResource implements Serializable {
     private String cause;
     private String message;
@@ -35,22 +45,48 @@ public class MigrationResultResource implements Serializable {
     }
 
 
+    /**
+     * Creates error message from Kuberentes status response
+     * @param status cluster response
+     * @param item owner Kubernetes object
+     * @return created instance
+     */
     public static MigrationResultResource fromStatus(Status status, KubernetesResource item) {
         return new MigrationResultResource(item, status.getReason() + ". ", status.getMessage());
     }
 
+    /**
+     * Creates success message
+     * @param item owner Kubernetes object
+     * @return created instance
+     */
     public static MigrationResultResource ok(KubernetesResource item) {
         return new MigrationResultResource(item, "Successfully migrated to cluster.", null, true);
     }
 
+    /**
+     * Creates error message when connection error occurred
+     * @param item owner Kubernetes object
+     * @return created instance
+     */
     public static MigrationResultResource connectionError(KubernetesResource item) {
         return new MigrationResultResource(item, "Connection exception. ", "Cannot connect to the cluster. Please, check cluster IP address.");
     }
 
+    /**
+     * Creates error message when unexpected error occurred
+     * @param item owner Kubernetes object
+     * @return created instance
+     */
     public static MigrationResultResource unexpected(KubernetesResource item) {
         return new MigrationResultResource(item, "Unexpected error occurred. ", "Try again later");
     }
 
+    /**
+     * Creates error message when object was not found
+     * @param item owner Kubernetes object
+     * @return created instance
+     */
     public static MigrationResultResource notFound(KubernetesResource item) {
         return new MigrationResultResource(item, "Not found. ", "Item was not found");
     }

@@ -14,6 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+/**
+ * Manages Deployment objects
+ */
 @Component
 @Order(3)
 public class DeploymentMigrationProvider implements MigrationProvider {

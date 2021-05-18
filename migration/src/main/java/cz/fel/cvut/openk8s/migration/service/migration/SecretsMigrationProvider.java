@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manages Secret objects
+ */
 @Component
 public class SecretsMigrationProvider implements MigrationProvider {
 

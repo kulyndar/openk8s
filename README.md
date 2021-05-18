@@ -1,5 +1,6 @@
 # openk8s
 This small app was developed to help you migrate your work from Kubernetes to OpenShift platforms. In a few clicks you will be able to select object you want to move.
+See documentation [here](https://kulyndar.github.io/openk8s/)
 
 ## Installation
 

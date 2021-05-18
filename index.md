@@ -1,37 +1,24 @@
-## Welcome to GitHub Pages
+# Hello, cloud users!
+## Welcome to opek8s migration app.
 
-You can use the [editor on GitHub](https://github.com/kulyndar/openk8s/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+This small app was developed to help you migrate your work from Kubernetes to OpenShift platforms. In a few clicks you will be able to select object you want to move.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+Please, notice that app will need to have appropriate roles in your clusters. For Kubernetes cluster, please ensure, that application account has capabilities to read all objects. For OpenShift, the app has to have ability to list namespaces and to create new objects.
 
-### Markdown
+To start tour journey, please download the app using manual on [GitHub](https://github.com/kulyndar/openk8s).
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+# User manual
 
-```markdown
-Syntax highlighted code block
+# Technical documentation
+Javadoc is available [here](https://kulyndar.github.io/openk8s/docs). 
 
-# Header 1
-## Header 2
-### Header 3
+## Technology stack
+Aplication BE was written in Java using following technologies:
 
-- Bulleted
-- List
+1. [Spring boot](https://spring.io/projects/spring-boot)
+2. [kubernetes-client](https://github.com/fabric8io/kubernetes-client)
 
-1. Numbered
-2. List
+Aplication FE was written in JS using:
+1. [React framework](https://reactjs.org/)
+2. [Ant Design](https://ant.design/docs/react/introduce)
 
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/kulyndar/openk8s/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
